@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lấy mã Facebook từ Hotmail</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #111827;
+      background: #f3f4f6;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 24px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(15,23,42,0.08);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 1.6rem;
+    }
+    label {
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: block;
+      margin-bottom: 6px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 70px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-family: monospace;
+      font-size: 0.9rem;
+      resize: vertical;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px #2563eb33;
+    }
+    button {
+      margin-top: 12px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .hint {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    .result {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 0.9rem;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+    .error {
+      color: #b91c1c;
+      background: #fee2e2;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-top: 12px;
+      font-size: 0.85rem;
+    }
+    .emails {
+      margin-top: 10px;
+      display: grid;
+      gap: 10px;
+    }
+    .email-card {
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 10px 12px;
+      background: #f9fafb;
+    }
+    .email-subject {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .email-meta {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .email-preview {
+      font-size: 0.85rem;
+      color: #4b5563;
+      word-break: break-word;
+    }
+    .small {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-top: 6px;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Lấy 3 email mới nhất &amp; mã Facebook</h1>
+    <p class="hint">
+      Nhập 1 dòng theo format:
+      <code>Username|Password|access_token|refresh_token|Client_id|Proxy</code><br/>
+      Có thể bỏ bớt <code>access_token</code>, <code>Client_id</code>, <code>Proxy</code> giống script gốc.
+    </p>
+
+    <label for="cred">Thông tin tài khoản</label>
+    <textarea id="cred" placeholder="email@hotmail.com|MyPass123|&lt;access_token&gt;|&lt;refresh_token&gt;|&lt;client_id&gt;|http://user:pass@host:port"></textarea>
+
+    <button id="btn">Lấy email</button>
+    <div id="error" class="error" style="display:none;"></div>
+
+    <div id="result" class="result" style="display:none;">
+      <div class="row">
+        <div>
+          <span class="badge" id="usedBadge"></span>
+        </div>
+        <div id="fbCodeWrap" style="font-weight:600;"></div>
+      </div>
+      <div class="small" id="tokenInfo"></div>
+
+      <h3 style="margin-top:14px;font-size:1rem;">3 email mới nhất</h3>
+      <div id="emails" class="emails"></div>
+    </div>
+
+    <p class="small">
+      Lưu ý: Đừng public trang này. Thông tin đăng nhập Hotmail rất nhạy cảm, chỉ dùng nội bộ.
+    </p>
+  </div>
+
+  <script>
+    const API_URL = "https://YOUR-VERCEL-PROJECT.vercel.app/api/get_fb_code"; // ĐỔI thành domain Vercel thật
+
+    const btn = document.getElementById("btn");
+    const credInput = document.getElementById("cred");
+    const errorBox = document.getElementById("error");
+    const resultBox = document.getElementById("result");
+    const usedBadge = document.getElementById("usedBadge");
+    const fbCodeWrap = document.getElementById("fbCodeWrap");
+    const tokenInfo = document.getElementById("tokenInfo");
+    const emailsBox = document.getElementById("emails");
+
+    function showError(msg) {
+      errorBox.style.display = "block";
+      errorBox.textContent = msg;
+      resultBox.style.display = "none";
+    }
+
+    function clearError() {
+      errorBox.style.display = "none";
+      errorBox.textContent = "";
+    }
+
+    function renderResult(data) {
+      clearError();
+      resultBox.style.display = "block";
+
+      // used: access_token / refresh_token / password_login
+      const used = data.used || "unknown";
+      let usedLabel = "";
+      if (used === "access_token") usedLabel = "Dùng access_token có sẵn";
+      else if (used === "refresh_token") usedLabel = "Refresh từ refresh_token";
+      else if (used === "password_login") usedLabel = "Login bằng Username/Password";
+      else usedLabel = "Không rõ nguồn token";
+
+      usedBadge.textContent = usedLabel;
+
+      if (data.fb_code) {
+        fbCodeWrap.textContent = "Mã bảo mật Facebook: " + data.fb_code;
+      } else {
+        fbCodeWrap.textContent = "Không tìm thấy email mã bảo mật Facebook trong 3 mail mới nhất.";
+      }
+
+      tokenInfo.textContent =
+        "Access token (rút gọn): " +
+        (data.access_token ? (data.access_token.slice(0, 16) + "...") : "N/A") +
+        " | Refresh token (rút gọn): " +
+        (data.refresh_token ? (data.refresh_token.slice(0, 16) + "...") : "N/A");
+
+      emailsBox.innerHTML = "";
+      (data.emails || []).forEach((mail, idx) => {
+        const card = document.createElement("div");
+        card.className = "email-card";
+
+        const subject = document.createElement("div");
+        subject.className = "email-subject";
+        subject.textContent = (idx + 1) + ". " + (mail.subject || "(Không có subject)");
+
+        const meta = document.createElement("div");
+        meta.className = "email-meta";
+        meta.textContent =
+          (mail.from_name || "") +
+          (mail.from_addr ? " <" + mail.from_addr + ">" : "") +
+          (mail.received ? " • " + mail.received : "");
+
+        const preview = document.createElement("div");
+        preview.className = "email-preview";
+        preview.textContent = mail.preview || "";
+
+        card.appendChild(subject);
+        card.appendChild(meta);
+        card.appendChild(preview);
+        emailsBox.appendChild(card);
+      });
+
+      if (!data.emails || data.emails.length === 0) {
+        emailsBox.innerHTML = "<div class='small'>Không lấy được email nào.</div>";
+      }
+    }
+
+    btn.addEventListener("click", async () => {
+      const cred = credInput.value.trim();
+      if (!cred) {
+        showError("Vui lòng nhập dòng Username|Password|access_token|refresh_token|Client_id|Proxy");
+        return;
+      }
+
+      clearError();
+      btn.disabled = true;
+      btn.textContent = "Đang lấy email...";
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ credential: cred }),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || ("HTTP " + res.status));
+        }
+
+        renderResult(data);
+      } catch (err) {
+        console.error(err);
+        showError("Lỗi khi gọi API: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Lấy email";
+      }
+    });
+  </script>
+</body>
+</html>

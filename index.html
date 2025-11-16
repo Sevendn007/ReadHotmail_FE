@@ -30,6 +30,16 @@
     .title{font-size:1.25rem;font-weight:700}
     .sub{color:var(--muted);font-size:0.9rem}
     .controls{display:flex;gap:10px;align-items:center}
+    .btn{
+      background:var(--accent);color:white;padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer;
+      box-shadow:0 6px 18px rgba(37,99,235,0.16);font-size:0.9rem;
+    }
+    .btn-small{padding:8px 12px;font-size:0.85rem;}
+    .btn:disabled{opacity:0.6;cursor:not-allowed}
+    .logout{
+      background:#fff;border:1px solid rgba(15,23,42,0.06);padding:8px 12px;border-radius:10px;cursor:pointer;
+      font-size:0.8rem;
+    }
 
     /* login overlay */
     .overlay{
@@ -45,21 +55,20 @@
     input[type="text"], input[type="password"]{
       width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e6eef8;background:#fff;font-size:0.95rem;
     }
-    .btn{
-      background:var(--accent);color:white;padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer;
-      box-shadow:0 6px 18px rgba(37,99,235,0.16);font-size:0.9rem;
-    }
-    .btn-small{padding:8px 12px;font-size:0.85rem;}
-    .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(37,99,235,0.12);box-shadow:none}
-    .btn:disabled{opacity:0.6;cursor:not-allowed}
 
-    /* banner for OTP / not found */
+    /* banner */
     .otp-banner{display:flex;align-items:center;gap:14px;padding:14px;border-radius:12px;margin-bottom:16px}
     .otp-banner .code{font-weight:800;font-size:1.15rem}
-    .otp-banner.success{background:linear-gradient(90deg, rgba(16,185,129,0.08), rgba(16,185,129,0.03));border:1px solid rgba(16,185,129,0.12);color:var(--success)}
-    .otp-banner.none{background:linear-gradient(90deg, rgba(239,68,68,0.04), rgba(239,68,68,0.01));border:1px solid rgba(239,68,68,0.06);color:var(--danger)}
+    .otp-banner.success{
+      background:linear-gradient(90deg, rgba(16,185,129,0.08), rgba(16,185,129,0.03));
+      border:1px solid rgba(16,185,129,0.12);color:var(--success)
+    }
+    .otp-banner.none{
+      background:linear-gradient(90deg, rgba(239,68,68,0.04), rgba(239,68,68,0.01));
+      border:1px solid rgba(239,68,68,0.06);color:var(--danger)
+    }
 
-    /* email list */
+    /* emails */
     .emails{display:grid;gap:12px}
     .email-card{
       background:linear-gradient(180deg, #ffffff, #fcfeff);
@@ -71,11 +80,6 @@
     .meta{font-size:0.85rem;color:var(--muted);margin-bottom:8px}
     .preview{color:#0b1220;line-height:1.35;max-height:4.2em;overflow:hidden;text-overflow:ellipsis}
     .small{font-size:0.85rem;color:var(--muted)}
-
-    .logout{
-      background:#fff;border:1px solid rgba(15,23,42,0.06);padding:8px 12px;border-radius:10px;cursor:pointer;
-      font-size:0.8rem;
-    }
 
     @media (max-width:560px){
       .wrap{padding:14px}
@@ -98,10 +102,7 @@
         </div>
       </div>
 
-      <!-- Banner OTP -->
       <div id="otpBannerWrap" style="margin-bottom:6px"></div>
-
-      <!-- Email list -->
       <div id="emailsWrap" class="emails"></div>
 
       <p class="small" style="margin-top:16px">
@@ -111,7 +112,7 @@
     </div>
   </div>
 
-  <!-- Login overlay -->
+  <!-- Login -->
   <div id="loginOverlay" class="overlay" style="display:flex">
     <div class="login-card" role="dialog" aria-modal="true" aria-label="Login">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -124,116 +125,89 @@
 
       <div style="margin-top:10px">
         <label for="username">Username</label>
-        <input id="username" type="text" autocomplete="username" placeholder="admin" />
+        <input id="username" type="text" autocomplete="username" />
       </div>
       <div style="margin-top:12px">
         <label for="password">Password</label>
-        <input id="password" type="password" autocomplete="current-password" placeholder="●●●●●●●●" />
+        <input id="password" type="password" autocomplete="current-password" />
       </div>
 
-      <div style="margin-top:14px;display:flex;gap:8px;align-items:center">
+      <div style="margin-top:14px">
         <button id="loginBtn" class="btn">Login</button>
-        <button id="demoCredBtn" class="btn ghost" title="Xem 3 tài khoản mặc định">Tài khoản demo</button>
       </div>
 
       <div style="margin-top:12px;font-size:0.85rem;color:var(--muted)">
-        <strong>Lưu ý:</strong> Backend kiểm tra username/password qua API <code>/api/login</code>.
-        File này chỉ hiển thị <em>danh sách demo</em>, mật khẩu thật nên cấu hình ở backend (ENV/DB).
-      </div>
-      <hr style="margin:12px 0;border:none;border-top:1px solid rgba(2,6,23,0.06)" />
-      <div style="font-size:0.85rem;color:var(--muted)">
-        <div><strong>Tài khoản demo (phải trùng với backend):</strong></div>
-        <ul style="margin:8px 0 0 18px;color:#0b1220">
-          <li>admin / P@ssw0rd1</li>
-          <li>operator / op123456</li>
-          <li>tester / Test!234</li>
-        </ul>
+        Nếu quên tài khoản, hãy liên hệ admin nội bộ. Thông tin xác thực được kiểm tra ở backend qua API
+        <code>/api/login</code>; không hiển thị trên trang này.
       </div>
     </div>
   </div>
 
   <script>
-    // ===== CONFIG =====
-    const API_URL = "https://YOUR-VERCEL-PROJECT.vercel.app/api/get_fb_code";   // TODO: sửa
-    const LOGIN_API_URL = "https://YOUR-VERCEL-PROJECT.vercel.app/api/login";   // TODO: sửa
-
-    // danh sách demo chỉ dùng để show khi bấm "Tài khoản demo"
-    const DEMO_ACCOUNTS = [
-      { user: "admin",    pass: "P@ssw0rd1" },
-      { user: "operator", pass: "op123456" },
-      { user: "tester",   pass: "Test!234" },
-    ];
+    // ==== CONFIG (đổi URL cho đúng) ====
+    const API_URL      = "https://readhotmailbe.vercel.app/api/get_fb_code";
+    const LOGIN_API_URL = "https://readhotmailbe.vercel.app/api/login";
 
     const SESSION_KEY = "readhotmail_logged_in";
     const TOKEN_KEY   = "readhotmail_token";
 
-    // ===== DOM =====
+    // DOM
     const loginOverlay = document.getElementById("loginOverlay");
-    const loginBtn = document.getElementById("loginBtn");
-    const demoCredBtn = document.getElementById("demoCredBtn");
+    const loginBtn     = document.getElementById("loginBtn");
     const usernameInput = document.getElementById("username");
     const passwordInput = document.getElementById("password");
 
-    const appPanel = document.getElementById("appPanel");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const newCredBtn = document.getElementById("newCredBtn");
+    const appPanel     = document.getElementById("appPanel");
+    const logoutBtn    = document.getElementById("logoutBtn");
+    const newCredBtn   = document.getElementById("newCredBtn");
     const otpBannerWrap = document.getElementById("otpBannerWrap");
-    const emailsWrap = document.getElementById("emailsWrap");
+    const emailsWrap   = document.getElementById("emailsWrap");
 
-    // ===== Auth helpers =====
-    function isLoggedIn() {
-      return sessionStorage.getItem(SESSION_KEY) === "1"
-             && !!sessionStorage.getItem(TOKEN_KEY);
+    function isLoggedIn(){
+      return sessionStorage.getItem(SESSION_KEY) === "1" &&
+             !!sessionStorage.getItem(TOKEN_KEY);
     }
-
-    function showApp() {
+    function showApp(){
       loginOverlay.style.display = "none";
-      appPanel.setAttribute("aria-hidden", "false");
+      appPanel.setAttribute("aria-hidden","false");
       logoutBtn.style.display = "inline-block";
       newCredBtn.style.display = "inline-block";
     }
-
-    function showLogin() {
+    function showLogin(){
       loginOverlay.style.display = "flex";
-      appPanel.setAttribute("aria-hidden", "true");
+      appPanel.setAttribute("aria-hidden","true");
       logoutBtn.style.display = "none";
       newCredBtn.style.display = "none";
     }
 
-    if (isLoggedIn()) {
-      showApp();
-    } else {
-      showLogin();
-    }
+    if(isLoggedIn()) showApp(); else showLogin();
 
-    // ===== Login flow =====
+    // Login
     loginBtn.addEventListener("click", async () => {
-      const u = (usernameInput.value || "").trim();
-      const p = (passwordInput.value || "").trim();
-      if (!u || !p) {
+      const u = (usernameInput.value||"").trim();
+      const p = (passwordInput.value||"").trim();
+      if(!u || !p){
         alert("Vui lòng nhập username & password");
         return;
       }
-
       loginBtn.disabled = true;
       loginBtn.textContent = "Đang login...";
 
       try {
         const res = await fetch(LOGIN_API_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {"Content-Type":"application/json"},
           body: JSON.stringify({ username: u, password: p }),
         });
         const data = await res.json();
-        if (!res.ok || !data.success) {
+        if(!res.ok || !data.success){
           throw new Error(data.error || ("HTTP " + res.status));
         }
-
-        sessionStorage.setItem(SESSION_KEY, "1");
+        sessionStorage.setItem(SESSION_KEY,"1");
         sessionStorage.setItem(TOKEN_KEY, data.token);
         showApp();
-        setTimeout(() => promptForCredential(), 320);
-      } catch (err) {
+        setTimeout(()=> promptForCredential(), 320);
+      } catch(err){
         console.error(err);
         alert("Login thất bại: " + err.message);
       } finally {
@@ -242,13 +216,8 @@
       }
     });
 
-    demoCredBtn.addEventListener("click", () => {
-      const list = DEMO_ACCOUNTS.map(a => `${a.user} / ${a.pass}`).join("\n");
-      alert("Tài khoản demo (cấu hình ở backend):\n" + list);
-    });
-
     logoutBtn.addEventListener("click", () => {
-      if (confirm("Đăng xuất?")) {
+      if(confirm("Đăng xuất?")){
         sessionStorage.removeItem(SESSION_KEY);
         sessionStorage.removeItem(TOKEN_KEY);
         otpBannerWrap.innerHTML = "";
@@ -257,48 +226,43 @@
       }
     });
 
-    // ===== Main flow =====
-    async function promptForCredential() {
+    // Main flow
+    async function promptForCredential(){
       const credential = window.prompt(
         "Nhập dòng credential (Username|Password|access_token|refresh_token|Client_id|Proxy)",
         ""
       );
-      if (!credential) return;
+      if(!credential) return;
       await callApiAndRender(credential);
     }
 
-    newCredBtn.addEventListener("click", () => promptForCredential());
-    appPanel.addEventListener("dblclick", () => promptForCredential());
+    newCredBtn.addEventListener("click", ()=>promptForCredential());
+    appPanel.addEventListener("dblclick", ()=>promptForCredential());
 
-    async function callApiAndRender(credentialStr) {
+    async function callApiAndRender(credentialStr){
       otpBannerWrap.innerHTML = "";
       emailsWrap.innerHTML = `<div class="small">Đang gọi API, vui lòng chờ...</div>`;
-
-      try {
+      try{
         const token = sessionStorage.getItem(TOKEN_KEY);
-        if (!token) throw new Error("Chưa đăng nhập hoặc token đã mất.");
-
+        if(!token) throw new Error("Chưa đăng nhập hoặc token đã mất.");
         const res = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token,
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json",
+            "Authorization":"Bearer "+token,
           },
           body: JSON.stringify({ credential: credentialStr }),
         });
-
         const data = await res.json();
-        if (!res.ok || !data.success) {
+        if(!res.ok || !data.success){
           const msg = (data && data.error) ? data.error : ("HTTP " + res.status);
           throw new Error(msg);
         }
-
-        const emails = (data.emails || []).slice(0, 3);
+        const emails = (data.emails || []).slice(0,3);
         const fb_code = data.fb_code || null;
-
         renderOtpBanner(fb_code);
         renderEmails(emails);
-      } catch (err) {
+      }catch(err){
         console.error(err);
         otpBannerWrap.innerHTML =
           `<div class="otp-banner none" style="padding:12px">
@@ -309,14 +273,14 @@
       }
     }
 
-    function renderOtpBanner(code) {
-      if (code) {
+    function renderOtpBanner(code){
+      if(code){
         otpBannerWrap.innerHTML =
           `<div class="otp-banner success">
              <div style="font-size:0.95rem;font-weight:700">Mã bảo mật Facebook tìm thấy</div>
              <div class="code">${escapeHtml(code)}</div>
            </div>`;
-      } else {
+      }else{
         otpBannerWrap.innerHTML =
           `<div class="otp-banner none">
              <div style="font-size:0.95rem;font-weight:700">Không có OTP Facebook</div>
@@ -325,28 +289,27 @@
       }
     }
 
-    function renderEmails(emails) {
-      if (!emails || emails.length === 0) {
+    function renderEmails(emails){
+      if(!emails || emails.length===0){
         emailsWrap.innerHTML = `<div class="small">Không có email để hiển thị.</div>`;
         return;
       }
       emailsWrap.innerHTML = "";
-      emails.forEach((m, idx) => {
+      emails.forEach((m,idx)=>{
         const card = document.createElement("div");
-        card.className = "email-card";
+        card.className="email-card";
         const subject = m.subject || "(Không có tiêu đề)";
         const fromName = m.from_name || m.from_addr || "(Không rõ)";
         const received = m.received || "";
         const preview = m.preview || "";
-
         card.innerHTML = `
           <div class="email-top">
             <div style="flex:1">
-              <div class="subject">${idx + 1}. ${escapeHtml(subject)}</div>
-              <div class="meta">${escapeHtml(fromName)}${received ? " • " + escapeHtml(received) : ""}</div>
+              <div class="subject">${idx+1}. ${escapeHtml(subject)}</div>
+              <div class="meta">${escapeHtml(fromName)}${received ? " • "+escapeHtml(received) : ""}</div>
             </div>
             <div style="min-width:120px;text-align:right">
-              <div class="small">#${idx + 1}</div>
+              <div class="small">#${idx+1}</div>
             </div>
           </div>
           <div class="preview">${escapeHtml(preview)}</div>
@@ -355,20 +318,20 @@
       });
     }
 
-    function escapeHtml(s) {
-      if (!s && s !== 0) return "";
+    function escapeHtml(s){
+      if(!s && s!==0) return "";
       return String(s).replace(/[&<>"]/g, c => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;"
+        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"
       })[c]);
     }
 
-    window.addEventListener("load", () => {
-      if (isLoggedIn()) {
-        setTimeout(() => {
-          if (!emailsWrap.innerHTML || emailsWrap.innerHTML.trim() === "") {
+    window.addEventListener("load", ()=>{
+      if(isLoggedIn()){
+        setTimeout(()=>{
+          if(!emailsWrap.innerHTML || emailsWrap.innerHTML.trim()===""){
             promptForCredential();
           }
-        }, 400);
+        },400);
       }
     });
   </script>

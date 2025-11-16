@@ -92,7 +92,8 @@
     }
 
     input[type="text"],
-    input[type="password"] {
+    input[type="password"],
+    textarea {
       width: 100%;
       padding: 10px 12px;
       border-radius: 10px;
@@ -101,7 +102,13 @@
       color: var(--text);
       font-size: 0.95rem;
     }
-    input:focus {
+    textarea {
+      resize: vertical;
+      min-height: 44px;
+      max-height: 140px;
+    }
+    input:focus,
+    textarea:focus {
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 1px rgba(59,130,246,0.8);
@@ -159,15 +166,6 @@
       gap: 10px;
       align-items: center;
       margin-top: 6px;
-    }
-    #credInput {
-      flex: 1;
-      padding: 9px 11px;
-      border-radius: 10px;
-      border: 1px solid rgba(148,163,184,0.6);
-      background: rgba(15,23,42,0.9);
-      color: var(--text);
-      font-size: 0.9rem;
     }
     #credInput::placeholder {
       color: rgba(148,163,184,0.65);
@@ -260,6 +258,68 @@
       text-overflow: ellipsis;
     }
 
+    /* Bảng tổng hợp multi-account */
+    #resultTable {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      display: none;
+    }
+    #resultTable th,
+    #resultTable td {
+      padding: 8px 6px;
+      border-bottom: 1px solid rgba(148,163,184,0.15);
+    }
+    #resultTable th {
+      text-align: left;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    #resultTable tr:hover {
+      background: rgba(59,130,246,0.08);
+    }
+    .view-btn {
+      cursor: pointer;
+      color: var(--accent);
+      text-align: center;
+    }
+    .view-btn:hover {
+      color: #60a5fa;
+    }
+
+    /* Popup xem email */
+    #popup {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.7);
+      z-index: 999;
+    }
+    #popupCard {
+      background: var(--bg-card);
+      padding: 20px;
+      border-radius: 14px;
+      max-width: 720px;
+      width: 92%;
+      max-height: 80vh;
+      overflow: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+      position: relative;
+    }
+    #closePopup {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: transparent;
+      color: var(--text);
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
     footer {
       margin-top: 20px;
       text-align: center;
@@ -278,9 +338,6 @@
       .cred-row {
         flex-direction: column;
         align-items: stretch;
-      }
-      #credInput {
-        width: 100%;
       }
       .btn {
         width: 100%;
@@ -333,14 +390,28 @@
           Chuỗi credential Hotmail
         </label>
         <div class="small">
-          Format: <code>Username|Password|access_token|refresh_token|Client_id|Proxy</code>
+          Mỗi dòng 1 tài khoản. Format:
+          <code>Username|Password|access_token|refresh_token|Client_id|Proxy</code>
+          (tối đa 10 dòng).
         </div>
         <div class="cred-row">
-          <input id="credInput" type="text"
-                 placeholder="username@hotmail.com|MyPass123|&lt;access_token&gt;|&lt;refresh_token&gt;|&lt;client_id&gt;|http://user:pass@host:port" />
+          <textarea id="credInput"
+            placeholder="username1@hotmail.com|pass1|...&#10;username2@hotmail.com|pass2|..."></textarea>
           <button id="fetchBtn" class="btn">Lấy email</button>
         </div>
       </div>
+
+      <!-- Bảng tổng hợp multi-account -->
+      <table id="resultTable">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>OTP Facebook</th>
+            <th style="text-align:center;width:70px;">Xem</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
 
       <div id="otpBanner"></div>
       <div id="emails" class="emails"></div>
@@ -350,25 +421,43 @@
   </div>
 </div>
 
+<!-- POPUP xem 3 email gần nhất -->
+<div id="popup">
+  <div id="popupCard">
+    <button id="closePopup">✖</button>
+    <h3 style="margin-top:0;margin-bottom:12px;">3 email gần nhất</h3>
+    <div id="popupEmails"></div>
+  </div>
+</div>
+
 <script>
   // === CONFIG: sửa 2 dòng này theo project Vercel của bạn ===
-  const API_URL       = "https://readhotmailbe.vercel.app/api/get_fb_code";
-  const LOGIN_API_URL = "https://readhotmailbe.vercel.app/api/login";
+  const API_URL       = "https://YOUR-VERCEL-PROJECT.vercel.app/api/get_fb_code";
+  const LOGIN_API_URL = "https://YOUR-VERCEL-PROJECT.vercel.app/api/login";
 
   const SESSION_KEY = "readhotmail_logged_in";
   const TOKEN_KEY   = "readhotmail_token";
 
   // DOM
-  const loginScreen = document.getElementById("loginScreen");
-  const appScreen   = document.getElementById("appScreen");
+  const loginScreen   = document.getElementById("loginScreen");
+  const appScreen     = document.getElementById("appScreen");
   const usernameInput = document.getElementById("username");
   const passwordInput = document.getElementById("password");
-  const loginBtn    = document.getElementById("loginBtn");
-  const logoutBtn   = document.getElementById("logoutBtn");
-  const credInput   = document.getElementById("credInput");
-  const fetchBtn    = document.getElementById("fetchBtn");
-  const otpBanner   = document.getElementById("otpBanner");
-  const emailsDiv   = document.getElementById("emails");
+  const loginBtn      = document.getElementById("loginBtn");
+  const logoutBtn     = document.getElementById("logoutBtn");
+
+  const credInput     = document.getElementById("credInput");
+  const fetchBtn      = document.getElementById("fetchBtn");
+  const otpBanner     = document.getElementById("otpBanner");
+  const emailsDiv     = document.getElementById("emails");
+  const resultTable   = document.getElementById("resultTable");
+  const resultTbody   = resultTable.querySelector("tbody");
+
+  const popup         = document.getElementById("popup");
+  const popupEmails   = document.getElementById("popupEmails");
+  const closePopupBtn = document.getElementById("closePopup");
+
+  let multiResults = []; // lưu emails cho từng dòng
 
   function isLoggedIn() {
     return sessionStorage.getItem(SESSION_KEY) === "1" &&
@@ -430,17 +519,45 @@
     sessionStorage.removeItem(TOKEN_KEY);
     otpBanner.innerHTML = "";
     emailsDiv.innerHTML = "";
+    resultTbody.innerHTML = "";
+    resultTable.style.display = "none";
     credInput.value = "";
     showLogin();
   });
 
-  // Fetch emails
+  // Gọi API cho một credential
+  async function callApiForCredential(credentialStr, token) {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token,
+      },
+      body: JSON.stringify({ credential: credentialStr }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || ("HTTP " + res.status));
+    }
+    return data;
+  }
+
+  // Fetch nhiều dòng
   fetchBtn.addEventListener("click", async () => {
-    const cred = (credInput.value || "").trim();
-    if (!cred) {
-      alert("Vui lòng nhập chuỗi credential Hotmail");
+    const lines = (credInput.value || "")
+      .split("\n")
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+
+    if (lines.length === 0) {
+      alert("Vui lòng nhập ít nhất 1 dòng credential");
       return;
     }
+    if (lines.length > 10) {
+      alert("Chỉ cho phép tối đa 10 tài khoản mỗi lần.");
+      return;
+    }
+
     const token = sessionStorage.getItem(TOKEN_KEY);
     if (!token) {
       alert("Phiên đăng nhập hết hạn, vui lòng login lại.");
@@ -448,41 +565,66 @@
       return;
     }
 
-    otpBanner.innerHTML = "";
-    emailsDiv.innerHTML = `<div class="small">Đang lấy email...</div>`;
     fetchBtn.disabled = true;
     fetchBtn.textContent = "Đang lấy...";
+    otpBanner.innerHTML = "";
+    emailsDiv.innerHTML = "";
+    resultTbody.innerHTML = "";
+    resultTable.style.display = "none";
+    multiResults = [];
 
     try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + token,
-        },
-        body: JSON.stringify({ credential: cred }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || ("HTTP " + res.status));
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const usernameFromLine = (line.split("|")[0] || "").trim() || "(Không rõ)";
+
+        let rowData = {
+          username: usernameFromLine,
+          fb_code: null,
+          emails: [],
+          error: null,
+        };
+
+        try {
+          const data = await callApiForCredential(line, token);
+          rowData.username = (data.email || usernameFromLine);
+          rowData.fb_code = data.fb_code || null;
+          rowData.emails = data.emails || [];
+        } catch (err) {
+          console.error("Lỗi với account", usernameFromLine, err);
+          rowData.error = err.message;
+        }
+
+        multiResults.push(rowData);
       }
-      renderOtp(data.fb_code || null);
-      renderEmails(data.emails || []);
-    } catch (err) {
-      console.error(err);
-      otpBanner.innerHTML =
-        `<div class="otp-banner none">
-           <div class="otp-icon">!</div>
-           <div>${escapeHtml(err.message)}</div>
-         </div>`;
-      emailsDiv.innerHTML = "";
+
+      // Nếu chỉ 1 dòng -> giữ behavior cũ + thêm table 1 dòng
+      if (multiResults.length === 1) {
+        const r = multiResults[0];
+        renderOtp(r.fb_code, r.error);
+        renderEmails(r.emails || []);
+      } else {
+        // nhiều dòng -> chỉ hiện bảng, không show banner/emails chi tiết
+        otpBanner.innerHTML = "";
+        emailsDiv.innerHTML = "";
+      }
+
+      renderResultTable(multiResults);
     } finally {
       fetchBtn.disabled = false;
       fetchBtn.textContent = "Lấy email";
     }
   });
 
-  function renderOtp(code) {
+  function renderOtp(code, errorMsg) {
+    if (errorMsg) {
+      otpBanner.innerHTML =
+        `<div class="otp-banner none">
+           <div class="otp-icon">!</div>
+           <div>${escapeHtml(errorMsg)}</div>
+         </div>`;
+      return;
+    }
     if (code) {
       otpBanner.innerHTML =
         `<div class="otp-banner success">
@@ -499,36 +641,105 @@
   }
 
   function renderEmails(list) {
-    if (!list.length) {
+    if (!list || !list.length) {
       emailsDiv.innerHTML = `<div class="small">Không có email nào để hiển thị.</div>`;
       return;
     }
     emailsDiv.innerHTML = "";
     list.slice(0, 3).forEach((m, idx) => {
-      const card = document.createElement("div");
-      card.className = "email-card";
-
-      const iconText = (m.from_name || m.from_addr || "✉")
-        .trim()
-        .charAt(0)
-        .toUpperCase() || "✉";
-
-      const subject = m.subject || "(Không có tiêu đề)";
-      const fromName = m.from_name || m.from_addr || "(Không rõ người gửi)";
-      const received = m.received || "";
-      const preview = m.preview || "";
-
-      card.innerHTML = `
-        <div class="email-icon">${escapeHtml(iconText)}</div>
-        <div class="email-body">
-          <div class="email-subject">${idx + 1}. ${escapeHtml(subject)}</div>
-          <div class="email-meta">${escapeHtml(fromName)}${received ? " • " + escapeHtml(received) : ""}</div>
-          <div class="email-preview">${escapeHtml(preview)}</div>
-        </div>
-      `;
-      emailsDiv.appendChild(card);
+      emailsDiv.appendChild(createEmailCard(m, idx));
     });
   }
+
+  function createEmailCard(m, idx) {
+    const card = document.createElement("div");
+    card.className = "email-card";
+
+    const iconText = (m.from_name || m.from_addr || "✉")
+      .trim()
+      .charAt(0)
+      .toUpperCase() || "✉";
+
+    const subject = m.subject || "(Không có tiêu đề)";
+    const fromName = m.from_name || m.from_addr || "(Không rõ người gửi)";
+    const received = m.received || "";
+    const preview = m.preview || "";
+
+    card.innerHTML = `
+      <div class="email-icon">${escapeHtml(iconText)}</div>
+      <div class="email-body">
+        <div class="email-subject">${idx + 1}. ${escapeHtml(subject)}</div>
+        <div class="email-meta">${escapeHtml(fromName)}${received ? " • " + escapeHtml(received) : ""}</div>
+        <div class="email-preview">${escapeHtml(preview)}</div>
+      </div>
+    `;
+    return card;
+  }
+
+  function renderResultTable(rows) {
+    if (!rows || !rows.length) {
+      resultTable.style.display = "none";
+      return;
+    }
+    resultTbody.innerHTML = "";
+    rows.forEach((r, idx) => {
+      const tr = document.createElement("tr");
+      const otpText = r.error
+        ? "Lỗi"
+        : (r.fb_code ? r.fb_code : "Không có");
+      tr.innerHTML = `
+        <td>${escapeHtml(r.username)}</td>
+        <td>${escapeHtml(otpText)}</td>
+        <td style="text-align:center;">
+          <span class="view-btn" data-index="${idx}" title="Xem 3 email gần nhất">👁</span>
+        </td>
+      `;
+      resultTbody.appendChild(tr);
+    });
+    resultTable.style.display = "table";
+  }
+
+  // Popup
+  resultTbody.addEventListener("click", (e) => {
+    const target = e.target;
+    if (target.classList.contains("view-btn")) {
+      const idx = parseInt(target.getAttribute("data-index"), 10);
+      const r = multiResults[idx];
+      if (!r) return;
+      showPopupEmails(r);
+    }
+  });
+
+  function showPopupEmails(row) {
+    popupEmails.innerHTML = "";
+    const header = document.createElement("div");
+    header.className = "small";
+    header.style.marginBottom = "8px";
+    header.textContent = "Tài khoản: " + row.username;
+    popupEmails.appendChild(header);
+
+    if (!row.emails || !row.emails.length) {
+      const noData = document.createElement("div");
+      noData.className = "small";
+      noData.textContent = row.error ? ("Lỗi: " + row.error) : "Không có email nào.";
+      popupEmails.appendChild(noData);
+    } else {
+      row.emails.slice(0, 3).forEach((m, idx) => {
+        popupEmails.appendChild(createEmailCard(m, idx));
+      });
+    }
+
+    popup.style.display = "flex";
+  }
+
+  closePopupBtn.addEventListener("click", () => {
+    popup.style.display = "none";
+  });
+  popup.addEventListener("click", (e) => {
+    if (e.target === popup) {
+      popup.style.display = "none";
+    }
+  });
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"]/g, c => ({
